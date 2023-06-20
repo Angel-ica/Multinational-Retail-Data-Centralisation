@@ -2,16 +2,16 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import re
-from pprint import pprint
-from data_extraction import DataExtractor
+from pprint import pprint 
 
 class DataCleaning:
-    def __init__(self, config_file, table):
-        self.table = DataExtractor(config_file).read_rds_table(table)
-        self.r_table = pd.DataFrame(self.table)
+    def __init__(self, table):
+        # self.table = DataExtractor(config_file).read_rds_table(table)
+        self.r_table = (table)
+
 
     def remove_null(self):
-        self.r_table = pd.DataFrame(self.table)
+        self.r_table = pd.DataFrame(self.r_table)
         self.r_table.replace('NULL', np.nan, inplace=True)
         self.r_table.dropna(inplace=True)
         return self.r_table 
@@ -27,6 +27,7 @@ class DataCleaning:
                 except ValueError:
                     self.r_table.loc[i,date_column] = np.nan
         self.r_table.dropna(subset=[date_column], inplace=True)
+        return date_column
 
     def valid_email(self, email_column):
         for i, email in enumerate(self.r_table[email_column]):
@@ -58,6 +59,7 @@ class DataCleaning:
 
 
     def clean_user_data(self):
+        self.remove_null()
         self.valid_date('date_of_birth')
         self.valid_date('join_date')
         self.valid_email('email_address')
@@ -65,12 +67,13 @@ class DataCleaning:
         self.valid_name('first_name')
         self.valid_name('last_name')
         self.valid_ccode('country_code')
-        self.remove_null()
+        # self.remove_null()
         return self.r_table
 
-def clean():
-    dcl = DataCleaning('db_creds.yaml', 'legacy_users')
-    cleaned_data = dcl.clean_user_data()
-    pprint(cleaned_data)
+    def clean_card_data(self,d_f):
+        df = self.valid_date(d_f)
+        print('Cleaning')
+        return df
+
+
     
-clean()
