@@ -10,38 +10,38 @@ from data_cleaning import DataCleaning
 # Class to extract data using Sqlalchemy
 
 class DataExtractor:
-    def __init__(self,yaml_file):
-        self.yaml_file = yaml_file
+    def __init__(self):
+        pass
 
-    def read_creds(self):
-        with open(self.yaml_file, 'r') as file:
-            credentials = yaml.safe_load(file)
-            return credentials
+    def read_creds(self,yaml_file):
+        with open(yaml_file, 'r') as file:
+            self.credentials = yaml.safe_load(file)
+            return self.credentials
 
-    def init_db_engine(self):
-        creds = self.read_creds()
+    def init_db_engine(self,creds):
         db_uri = f"postgresql+psycopg2://{creds['RDS_USER']}:{creds['RDS_PASSWORD']}@{creds['RDS_HOST']}:{creds['RDS_PORT']}/{creds['RDS_DATABASE']}"
         engine = db.create_engine(db_uri)
         conn = engine.connect()
         return conn
 
-    def read_data(self):
-        inspector = db.inspect(self.init_db_engine())
+    def read_data(self,conn):
+        inspector = db.inspect(conn)
         tables = inspector. get_table_names()
+        print(tables)
         return tables
 
-    def read_rds_table(self,table):
-        con = self.init_db_engine()
+    def read_rds_table(self,con,table):
+        # con = self.init_db_engine()
         df = pd.read_sql_table(table,con)
         # print(df.columns)
         return df
     
-    def upload_to_db(self,df,table):
-        creds = self.read_creds()
+    def upload_to_db(self,creds,df,table):
         db_uri = f"postgresql+psycopg2://{creds['RDS_USER']}:{creds['RDS_PASSWORD']}@{creds['RDS_HOST']}:{creds['RDS_PORT']}/{creds['RDS_DATABASE']}"
         engine = db.create_engine(db_uri)
         conn = engine.connect()  
-        df.to_sql(name=table,con=conn, if_exists='replace') 
+        upload =df.to_sql(name=table,con=conn, if_exists='replace') 
+        return upload
 
     def retrieve_pdf_data(self,url):
         data = ''
@@ -65,13 +65,18 @@ class DataExtractor:
 if __name__=='__main__':
 
     def main():
-        dex = DataExtractor('db_creds.yaml')
-        table = dex.read_rds_table('legacy_users')
-        file = dex.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
-        clean_cd = DataCleaning('legacy_users')
-        clean_cd.clean_card_data(file)
-        print(clean_cd)
+        dex = DataExtractor()
+        dcl = DataCleaning()
+        creds = dex.read_creds('db_creds.yaml')
+        conn = dex.init_db_engine(creds)
+        data = dex.read_data(conn)
+        tables = dex.read_rds_table(conn,'legacy_users')
+        clean = dcl.clean_user_data(tables)
+
+        
+        # file = dex.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
     main()
 
 #TODO
-'Carry out all tasks in a main function to resolve conflicts'
+'resolve import conflicts'
+
