@@ -5,75 +5,77 @@ import re
 from pprint import pprint 
 
 class DataCleaning:
-    def __init__(self, table):
-        # self.table = DataExtractor(config_file).read_rds_table(table)
-        self.r_table = (table)
+    def __init__(self):
+        pass
 
-
-    def remove_null(self):
-        self.r_table = pd.DataFrame(self.r_table)
+    def remove_null(self,r_table):
+        self.r_table = pd.DataFrame(r_table)
         self.r_table.replace('NULL', np.nan, inplace=True)
         self.r_table.dropna(inplace=True)
+        print(self.r_table)
         return self.r_table 
 
-    def valid_date(self, date_column):
-        date_format = '%Y-%m-%d'
-        for i, date in enumerate(self.r_table[date_column]):
-            if not isinstance(date, str):
-                self.r_table[date_column][i] = datetime.strftime(date, date_format)
-            else:
-                try:
-                    datetime.strptime(date, date_format)
-                except ValueError:
-                    self.r_table.loc[i,date_column] = np.nan
-        self.r_table.dropna(subset=[date_column], inplace=True)
-        return date_column
+    def valid_date(self,table, date_column):
+        # table[date_column] = pd.to_datetime(table[date_column],errors='coerce')
+        pd.to_datetime(table[date_column],errors='coerce')
+        return table[date_column]
 
-    def valid_email(self, email_column):
-        for i, email in enumerate(self.r_table[email_column]):
+    def valid_email(self,table, email_column):
+        for i, email in enumerate(table[email_column]):
             pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
             if not re.match(pattern, email):
-                self.r_table.loc[i,email_column] = np.nan
-        self.r_table.dropna(subset=[email_column], inplace=True)
+                table.loc[i,email_column] = np.nan
+        table.dropna(subset=[email_column], inplace=True)
+        return table[email_column]
 
-    def valid_phone_no(self, phone_no_column):
-        for i, phone_no in enumerate(self.r_table[phone_no_column]):
-            pattern = r'^(?!.*\s)(?!.{10,11}$)[0-9,./a-zA-Z]+$'
+# TODO : modify phone num column 
+    def valid_phone_no(self,table, phone_no_column):
+        pattern = r'^(?!.*\s)(?!.{10,11}$)[0-9,./a-zA-Z]+$'
+        for i, phone_no in enumerate(table[phone_no_column]):
             if re.match(pattern, phone_no):
-                self.r_table.loc[i,phone_no_column] = np.nan
-        self.r_table.dropna(subset=[phone_no_column], inplace=True)
+                table.loc[i,phone_no_column] = np.nan
+        table.dropna(subset=[phone_no_column], inplace=True)
+        print(table[phone_no_column])
+        return table[phone_no_column]
 
-    def valid_name(self, name_column):
+    def valid_name(self, table,name_column):
         pattern = r'^\d+$'
-        for i, name in enumerate(self.r_table[name_column]):
+        for i, name in enumerate(table[name_column]):
             if re.match(pattern, name):
-                self.r_table.loc[i,name_column] = np.nan
-        self.r_table.dropna(subset=[name_column], inplace=True)
+                table.loc[i,name_column] = np.nan
+        table.dropna(subset=[name_column], inplace=True)
+        return table[name_column]
 
-    def valid_ccode(self, ccode_column):
+    def valid_ccode(self,table, ccode_column):
         valid = {'Germany': 'DE', 'United Kingdom': 'UK', 'United States': 'US'}
-        for i, country in enumerate(self.r_table['country']):
-            if country in valid:
-                self.r_table.loc[i, ccode_column] = valid[country]
-        return self.r_table[ccode_column]
+        for i, country in enumerate(table['country']):
+            if country in valid.keys():
+                table.loc[i, ccode_column] = list(valid.values())[list(valid.keys()).index(country)]
+                return table[ccode_column]
 
 
-    def clean_user_data(self):
-        self.remove_null()
-        self.valid_date('date_of_birth')
-        self.valid_date('join_date')
-        self.valid_email('email_address')
-        self.valid_phone_no('phone_number')
-        self.valid_name('first_name')
-        self.valid_name('last_name')
-        self.valid_ccode('country_code')
-        # self.remove_null()
-        return self.r_table
+    def clean_user_data(self,table):
+        self.valid_date(table,'date_of_birth')
+        self.valid_date(table,'join_date')
+        self.valid_email(table,'email_address')
+        self.valid_phone_no(table,'phone_number')
+        self.valid_name(table,'first_name')
+        self.valid_name(table,'last_name')
+        self.valid_ccode(table,'country_code')
+        self.remove_null(table)
+        print(table)
+        return table
 
-    def clean_card_data(self,d_f):
-        df = self.valid_date(d_f)
-        print('Cleaning')
-        return df
+    def clean_card_data(self,table):
+        df = pd.DataFrame(table)
+        self.valid_date(df,'')
+        self.remove_null(table)
+        try:
+            assert table['card_number'].str.isdigit()
+        except:
+            AssertionError
+            
+        return table
 
 
     
