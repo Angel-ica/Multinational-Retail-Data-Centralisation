@@ -62,21 +62,3 @@ class DataExtractor:
         return data
 
 
-if __name__=='__main__':
-
-    def main():
-        dex = DataExtractor()
-        dcl = DataCleaning()
-        creds = dex.read_creds('db_creds.yaml')
-        conn = dex.init_db_engine(creds)
-        data = dex.read_data(conn)
-        tables = dex.read_rds_table(conn,'legacy_users')
-        clean = dcl.clean_user_data(tables)
-
-        
-        # file = dex.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
-    main()
-
-#TODO
-'resolve import conflicts'
-
