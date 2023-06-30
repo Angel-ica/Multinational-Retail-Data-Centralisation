@@ -12,12 +12,11 @@ class DataCleaning:
         self.r_table = pd.DataFrame(r_table)
         self.r_table.replace('NULL', np.nan, inplace=True)
         self.r_table.dropna(inplace=True)
-        print(self.r_table)
+        # print(self.r_table)
         return self.r_table 
 
     def valid_date(self,table, date_column):
-        # table[date_column] = pd.to_datetime(table[date_column],errors='coerce')
-        pd.to_datetime(table[date_column],errors='coerce')
+        table[date_column] = pd.to_datetime(table[date_column],errors='coerce')
         return table[date_column]
 
     def valid_email(self,table, email_column):
@@ -67,14 +66,15 @@ class DataCleaning:
         return table
 
     def clean_card_data(self,table):
-        df = pd.DataFrame(table)
-        self.valid_date(df,'')
+        # df = pd.DataFrame(table)
+        self.valid_date(table,'date_payment_confirmed')
         self.remove_null(table)
         try:
             assert table['card_number'].str.isdigit()
         except:
             AssertionError
-            
+
+        print (table)
         return table
 
 
