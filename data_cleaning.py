@@ -66,7 +66,6 @@ class DataCleaning:
         return table
 
     def clean_card_data(self,table):
-        # df = pd.DataFrame(table)
         self.valid_date(table,'date_payment_confirmed')
         self.remove_null(table)
         try:
