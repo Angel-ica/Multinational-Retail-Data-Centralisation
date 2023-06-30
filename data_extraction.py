@@ -3,9 +3,8 @@ import yaml
 import random
 import sqlalchemy as db
 import PyPDF2 as pdf
-import requests,os
+import tabula
 from data_cleaning import DataCleaning
-
 
 # Class to extract data using Sqlalchemy
 
@@ -31,34 +30,20 @@ class DataExtractor:
         return tables
 
     def read_rds_table(self,con,table):
-        # con = self.init_db_engine()
         df = pd.read_sql_table(table,con)
         # print(df.columns)
         return df
     
-    def upload_to_db(self,creds,df,table):
+    def upload_to_db(self,creds,df,table_name):
         db_uri = f"postgresql+psycopg2://{creds['RDS_USER']}:{creds['RDS_PASSWORD']}@{creds['RDS_HOST']}:{creds['RDS_PORT']}/{creds['RDS_DATABASE']}"
         engine = db.create_engine(db_uri)
         conn = engine.connect()  
-        upload =df.to_sql(name=table,con=conn, if_exists='replace') 
+        upload =df.to_sql(name=table_name,con=conn, if_exists='replace') 
         return upload
 
     def retrieve_pdf_data(self,url):
-        data = ''
-        response = requests.get(url)
-        if response.status_code == 200:
-            with open('temp.pdf', 'wb') as file:
-                file.write(response.content)
+        dfs = pd.concat(tabula.read_pdf(url,pages='all'),ignore_index=True)
+        return dfs
 
-            with open('temp.pdf', 'rb') as file:
-                reader = pdf.PdfFileReader(file)
-                for page in reader.pages:
-                    text = page.extract_text()
-                    data +=text
-
-            os.remove('temp.pdf')
-        else:
-            print(f"Error retrieving PDF data. Status code: {response.status_code}")
-        return data
 
 
